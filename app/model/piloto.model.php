@@ -6,7 +6,7 @@ class PilotoModel{
     }
 
     public function getPiloto($id){
-        $query=$this->db->prepare('SELECT * FROM pilotos WHERE id=?');
+        $query=$this->db->prepare("SELECT * FROM pilotos WHERE id_piloto=?");
         $query->execute([$id]);
         $vuelo=$query->fetch(PDO::FETCH_OBJ);
         return $vuelo; 

@@ -7,56 +7,71 @@ class VueloController{
     private $vueloModel;
     private $pilotoModel;
     private $view;
-    private $data;
     public function __construct(){
         $this->vueloModel=new VueloModel();
         $this->pilotoModel=new PilotoModel();
         $this->view=new ApiView();
-
-        $this->data = file_get_contents("php://input");
     }
 
-    private function getData() {
-        return json_decode($this->data);
-    }
+    public function getAll($req, $res){
+        $orderBy = false;
+        if(isset($req->query->orderBy))
+            $orderBy = $req->query->orderBy;
 
-    public function getVuelos($params=null){
-        $vuelos=$this->vueloModel->getAll();
+        $vuelos=$this->vueloModel->getAll($orderBy);
         return $this->view->response($vuelos);
     }
 
-    public function getVuelosOrdenados($params=null){
-        if($params[':ORDEN']===''){
-            return $this->view->response("Faltan agregar el orden", 400);
-        } 
-        
-        $orden=$params[':ORDEN'];
-
-        $vuelos=$this->vueloModel->getAllOrdenado($orden);
-        return $this->view->response($vuelos);
-    }
-
-    public function addVuelo($params=null){
-        $vuelo=$this->getData();
-        /**
-         * no carga bien, salta error a pesar de estar todo cargado
-         */
-        if(empty($vuelo->id_piloto)||empty($vuelo->origen)||empty($vuelo->destino)||empty($vuelo->cant_pasajeros)||empty($vuelo->duracion_vuelo)){
+    public function create($req, $res){
+        var_dump($req->body);  
+        if (empty($req->body->id_piloto) || empty($req->body->origen) || empty($req->body->destino) || empty($req->body->cant_pasajeros) || empty($req->body->duracion_vuelo)) {
             return $this->view->response('Faltan completar datos', 400);
         }else{
-            $id=$vuelo->id_piloto;
+            $id=$req->body->id_piloto;
             $piloto=$this->pilotoModel->getPiloto($id);
+
             if($piloto==null){
                 return $this->view->response('No existe el piloto', 404);
             } else{
-                $origen=$vuelo->origen;
-                $destino=$vuelo->destino;
-                $cant=$vuelo->cant_pasajeros;
-                $duracion=$vuelo->duracion_vuelo;
+                $origen=$req->body->origen;
+                $destino=$req->body->destino;
+                $cant=$req->body->cant_pasajeros;
+                $duracion=$req->body->duracion_vuelo;
 
                 $idVuelo=$this->vueloModel->addVuelo($id, $origen, $destino, $cant, $duracion);
                 return $this->view->response("Se inserto el vuelo con el id=$idVuelo", 200);
             }
         } 
+    }
+
+    public function update($req, $res) {
+        $id = $req->params->id;
+
+        // verifico que exista
+        $vuelo = $this->vueloModel->get($id); //hay q hacer x id
+        if (!$vuelo) {
+            return $this->view->response("El vuelo con el id=$id no existe", 404);
+        }
+
+        if (empty($req->body->id_piloto) || empty($req->body->origen) || empty($req->body->destino) || empty($req->body->cant_pasajeros) || empty($req->body->duracion_vuelo)) {
+            return $this->view->response('Faltan completar datos', 400);
+        }else{ 
+            $id_piloto=$req->body->id_piloto;
+            $piloto=$this->pilotoModel->getPiloto($id);
+
+            if($piloto==null){
+                return $this->view->response('No existe el piloto', 404);
+            } else{
+                $origen=$req->body->origen;
+                $destino=$req->body->destino;
+                $cant=$req->body->cant_pasajeros;
+                $duracion=$req->body->duracion_vuelo;
+
+                $this->vueloModel->updateVuelo($id, $id_piloto, $origen, $destino, $cant, $duracion);
+
+                $vuelo = $this->vueloModel->get($id); //hay q hacer x id
+                $this->view->response($vuelo, 200);
+            }
+        }
     }
 }
