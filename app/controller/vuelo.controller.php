@@ -45,10 +45,10 @@ class VueloController{
     }
 
     public function update($req, $res) {
-        $id = $req->params->id;
+        $id = $req->query->id_vuelos;
 
         // verifico que exista
-        $vuelo = $this->vueloModel->get($id); //hay q hacer x id
+        $vuelo = $this->vueloModel->get($id);
         if (!$vuelo) {
             return $this->view->response("El vuelo con el id=$id no existe", 404);
         }
@@ -69,7 +69,7 @@ class VueloController{
 
                 $this->vueloModel->updateVuelo($id, $id_piloto, $origen, $destino, $cant, $duracion);
 
-                $vuelo = $this->vueloModel->get($id); //hay q hacer x id
+                $vuelo = $this->vueloModel->get($id);
                 $this->view->response($vuelo, 200);
             }
         }
